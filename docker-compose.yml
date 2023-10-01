@@ -56,7 +56,5 @@ services:
       #REACT_APP_API_URL: ${PROTOCOL}${DEPLOY_HOST}:${APP_PORT}
     volumes:
       - front_build:/app/build
-    ports:
-      - 80:80
 
 
