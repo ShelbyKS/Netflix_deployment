@@ -45,4 +45,18 @@ services:
     depends_on:
       postgres:
         condition: service_started
+      #frontend:
+        #condition: service_completed_successfully
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    #environment:
+      #REACT_APP_API_URL: ${PROTOCOL}${DEPLOY_HOST}:${APP_PORT}
+    volumes:
+      - front_build:/app/build
+    ports:
+      - 80:80
+
 
