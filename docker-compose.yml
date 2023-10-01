@@ -17,6 +17,7 @@ services:
       local_area:
     volumes:
       - database_data:/var/lib/postgresql/data 
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 123
@@ -33,6 +34,7 @@ services:
       - 8080:8080
     networks:
       local_area:
+    restart: unless-stopped
     environment:
       POSTGRES_PASSWORD: 123
       POSTGRES_USER: postgres
