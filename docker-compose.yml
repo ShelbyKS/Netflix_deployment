@@ -16,7 +16,7 @@ services:
     networks:
       local_area:
     volumes:
-      - database_data:/var/lib/postgresql/data 
+      - database_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     environment:
       POSTGRES_USER: postgres
@@ -24,7 +24,24 @@ services:
       POSTGRES_DB: netflix
     expose:
       - "5432"
-    
+
+
+  fill_db:
+    build:
+      context: ../fill_db
+      dockerfile: Dockerfile
+    networks:
+      local_area:
+    environment:
+      POSTGRES_PASSWORD: 123
+      POSTGRES_USER: postgres
+      POSTGRES_DB: netflix
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+
+    depends_on:
+      postgres:
+        condition: service_started
 
   backend:
     build:
@@ -45,16 +62,14 @@ services:
     depends_on:
       postgres:
         condition: service_started
-      #frontend:
+        #frontend:
         #condition: service_completed_successfully
 
   frontend:
     build:
       context: ../frontend
       dockerfile: Dockerfile
-    #environment:
+      #environment:
       #REACT_APP_API_URL: ${PROTOCOL}${DEPLOY_HOST}:${APP_PORT}
     volumes:
       - front_build:/app/build
-
-
