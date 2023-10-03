@@ -1,8 +1,9 @@
 version: '3.9'
 
 volumes:
+  redis_data:
   front_build:
-  database_data:
+  postgres_data:
   static_files:
 
 networks:
@@ -16,15 +17,14 @@ services:
     networks:
       local_area:
     volumes:
-      - database_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data 
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 123
       POSTGRES_DB: netflix
     expose:
-      - "5432"
-
+      - 5432
 
   fill_db:
     build:
@@ -62,14 +62,26 @@ services:
     depends_on:
       postgres:
         condition: service_started
-        #frontend:
-        #condition: service_completed_successfully
+      redis:
+        condition: service_started
+      frontend:
+        condition: service_started
 
   frontend:
     build:
       context: ../frontend
       dockerfile: Dockerfile
-      #environment:
-      #REACT_APP_API_URL: ${PROTOCOL}${DEPLOY_HOST}:${APP_PORT}
+
+  redis:
+    image: redis:6.2-alpine
+    networks:
+      local_area:
+    restart: always
     volumes:
-      - front_build:/app/build
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+      - redis_data:/var/lib/redis/data 
+    expose:
+      - 6379
+
+
+
