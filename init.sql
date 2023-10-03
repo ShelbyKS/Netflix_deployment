@@ -6,7 +6,7 @@ create table "user"
     password    varchar not null,
     name        varchar,
     email       varchar not null
-        constraint email_unique
+        constraint name_unique
             unique,
     date_joined varchar,
     image_path  varchar
@@ -22,12 +22,12 @@ create table film
             primary key,
     name            varchar,
     description     text,
-    duration        interval,
+    duration        varchar,
     preview_path    varchar,
     media_path      varchar,
     country         varchar,
     release_year    integer,
-    rating          integer,
+    rating          double precision,
     rates_count     integer,
     age_restriction integer
 );
@@ -74,7 +74,7 @@ create table genre
 alter table genre
     owner to postgres;
 
-create table "genre-film"
+create table genre_film
 (
     genre_id integer
         constraint "genre-film_fk0"
@@ -84,7 +84,7 @@ create table "genre-film"
             references film
 );
 
-alter table "genre-film"
+alter table genre_film
     owner to postgres;
 
 create table series
@@ -127,8 +127,6 @@ create table session
             primary key,
     expires_at timestamp,
     user_id    integer
-        constraint session_session_data_key
-            unique
 );
 
 alter table session
@@ -142,7 +140,7 @@ create table series_estimation
     series_id integer
         constraint series_estimation_fk1
             references series,
-    rate      integer
+    rate      double precision
 );
 
 alter table series_estimation
@@ -156,7 +154,7 @@ create table film_estimation
     series_id integer
         constraint film_estimation_fk1
             references series,
-    rate      integer
+    rate      double precision
 );
 
 alter table film_estimation
