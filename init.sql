@@ -1,178 +1,125 @@
-create table "user"
+CREATE EXTENSION IF NOT EXISTS moddatetime
+    WITH SCHEMA public
+    CASCADE;
+
+CREATE TABLE "user"
 (
-    id          serial
-        constraint user_pk
-            primary key,
-    password    varchar not null,
-    name        varchar,
-    email       varchar not null
-        constraint name_unique
-            unique,
-    date_joined varchar,
-    image_path  varchar
+    id         SERIAL PRIMARY KEY,
+    name       TEXT,
+    email      TEXT NOT NULL UNIQUE,
+    password   TEXT NOT NULL,
+    image_path TEXT,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-alter table "user"
-    owner to postgres;
+CREATE TRIGGER modify_user_updated_at
+    BEFORE UPDATE
+    ON "user"
+    FOR EACH ROW
+EXECUTE PROCEDURE public.moddatetime(updated_at);
 
-create table film
+CREATE TABLE video
 (
-    id              serial
-        constraint film_pk
-            primary key,
-    name            varchar,
-    description     text,
-    duration        varchar,
-    preview_path    varchar,
-    media_path      varchar,
-    country         varchar,
-    release_year    integer,
-    rating          double precision,
-    rates_count     integer,
-    age_restriction integer
+    id              SERIAL PRIMARY KEY,
+    name            TEXT,
+    description     TEXT,
+    preview_path    TEXT                  NOT NULL,
+    release_year    INTEGER
+        CONSTRAINT release_year_range
+            CHECK (release_year >= 1890
+                AND release_year <= EXTRACT(YEAR FROM CURRENT_DATE)),
+    rating          FLOAT(2)
+        CONSTRAINT rating_range
+            CHECK (rating BETWEEN 0 AND 10),
+    age_restriction INTEGER
+        CONSTRAINT age_restriction_range
+            CHECK (rating BETWEEN 0 AND 100),
+    seasons_count   INT         DEFAULT 0 NOT NULL,
+    created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-alter table film
-    owner to postgres;
+CREATE TRIGGER modify_video_updated_at
+    BEFORE UPDATE
+    ON video
+    FOR EACH ROW
+EXECUTE PROCEDURE public.moddatetime(updated_at);
 
-create table artist
+CREATE TABLE "cast"
 (
-    id          serial
-        constraint artist_pk
-            primary key,
-    name        varchar,
-    birth_date  date,
-    death_date  date,
-    birth_place varchar,
-    image_path  varchar
+    id   serial PRIMARY KEY,
+    name varchar UNIQUE NOT NULL
 );
 
-alter table artist
-    owner to postgres;
-
-create table "artist-film"
+CREATE TABLE video_cast
 (
-    artist_id serial
-        constraint "artist-film_fk0"
-            references artist,
-    film_id   serial
-        constraint "artist-film_fk1"
-            references film
+    video_id INTEGER REFERENCES video (id),
+    cast_id  INTEGER REFERENCES "cast" (id),
+    PRIMARY KEY (video_id, cast_id)
 );
 
-alter table "artist-film"
-    owner to postgres;
-
-create table genre
+CREATE TABLE episode
 (
-    id   serial
-        constraint genre_pk
-            primary key,
-    name varchar
+    id            SERIAL PRIMARY KEY,
+    name          TEXT     NOT NULL,
+    description   TEXT,
+    duration      INTERVAL NOT NULL,
+    preview_path  TEXT     NOT NULL,
+    media_path    TEXT     NOT NULL,
+    number        INTEGER  NOT NULL,
+    season_number INTEGER  NOT NULL,
+    created_at    TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at    TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    video_id      INTEGER REFERENCES video (id)
 );
 
-alter table genre
-    owner to postgres;
+CREATE TRIGGER modify_episode_updated_at
+    BEFORE UPDATE
+    ON episode
+    FOR EACH ROW
+EXECUTE PROCEDURE public.moddatetime(updated_at);
 
-create table genre_film
+CREATE TABLE video_estimation
 (
-    genre_id integer
-        constraint "genre-film_fk0"
-            references genre,
-    film_id  integer
-        constraint "genre-film_fk1"
-            references film
+    rate       INTEGER
+        CONSTRAINT rate_range
+            CHECK (rate BETWEEN 0 AND 10),
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    video_id   INTEGER REFERENCES video (id),
+    user_id    INTEGER REFERENCES "user" (id),
+    UNIQUE (video_id, user_id)
 );
 
-alter table genre_film
-    owner to postgres;
+CREATE TRIGGER modify_video_estimation_updated_at
+    BEFORE UPDATE
+    ON video_estimation
+    FOR EACH ROW
+EXECUTE PROCEDURE public.moddatetime(updated_at);
 
-create table series
+CREATE TABLE genre
 (
-    id              serial
-        constraint series_pk
-            primary key,
-    name            varchar,
-    description     text,
-    duration        interval,
-    preview_path    varchar,
-    media_path      varchar,
-    country         varchar,
-    release_year    integer,
-    rating          integer,
-    rates_count     integer,
-    age_restriction integer
+    id   serial PRIMARY KEY,
+    name varchar UNIQUE NOT NULL
 );
 
-alter table series
-    owner to postgres;
-
-create table "genre-series"
+CREATE TABLE video_genre
 (
-    genre_id  integer
-        constraint "genre-series_fk0"
-            references genre,
-    series_id integer
-        constraint "genre-series_fk1"
-            references series
+    video_id INTEGER REFERENCES video (id),
+    genre_id INTEGER REFERENCES genre (id),
+    PRIMARY KEY (video_id, genre_id)
 );
 
-alter table "genre-series"
-    owner to postgres;
-
-create table session
+CREATE TABLE tag
 (
-    token      uuid not null
-        constraint session_pk
-            primary key,
-    expires_at timestamp,
-    user_id    integer
+    id   serial PRIMARY KEY,
+    name varchar UNIQUE NOT NULL
 );
 
-alter table session
-    owner to postgres;
-
-create table series_estimation
+CREATE TABLE video_tag
 (
-    user_id   integer
-        constraint series_estimation_fk0
-            references "user",
-    series_id integer
-        constraint series_estimation_fk1
-            references series,
-    rate      double precision
+    video_id INTEGER REFERENCES video (id),
+    tag_id   INTEGER REFERENCES tag (id),
+    PRIMARY KEY (video_id, tag_id)
 );
-
-alter table series_estimation
-    owner to postgres;
-
-create table film_estimation
-(
-    user_id   integer
-        constraint film_estimation_fk0
-            references "user",
-    series_id integer
-        constraint film_estimation_fk1
-            references series,
-    rate      double precision
-);
-
-alter table film_estimation
-    owner to postgres;
-
-create table episode
-(
-    id          serial
-        constraint episode_pk
-            primary key,
-    series_id   integer
-        constraint episode_fk0
-            references series,
-    description text,
-    number      integer,
-    name        varchar
-);
-
-alter table episode
-    owner to postgres;
-
