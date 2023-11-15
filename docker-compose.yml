@@ -1,10 +1,9 @@
 version: '3.9'
 
 volumes:
+  postgres_data:
   redis_data:
   front_bundle:
-  postgres_data:
-  static_files:
 
 networks:
   local_area:
@@ -23,10 +22,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-    # ports:
-    #   - 5432:5432
-    expose:
-      - ${POSTGRES_PORT}
 
   backend:
     build:
@@ -37,31 +32,20 @@ services:
     restart: unless-stopped
     env_file:
       - .env
-    volumes:
-      - front_bundle:/app/bundle
     depends_on:
       postgres:
         condition: service_started
       redis:
         condition: service_started
       frontend:
-        # condition: service_completed_successfully
-        condition: service_started
-    ports:
-      - ${SERVER_PORT}:${SERVER_PORT}
-    expose:
-      - ${SERVER_PORT}
+        condition: service_completed_successfully
 
   frontend:
-    networks:
-        local_area:
     build:
       context: ../frontend
       dockerfile: Dockerfile
     volumes:
       - front_bundle:/app/bundle
-    ports:
-    - 80:80
 
   redis:
     image: redis:6.2-alpine
@@ -71,20 +55,18 @@ services:
     volumes:
       - ./redis.conf:/usr/local/etc/redis/redis.conf
       - redis_data:/var/lib/redis/data 
-    expose:
-      - ${REDIS_PORT}
 
-  # nginx:
-  #   image: nginx:latest
-  #   networks:
-  #     local_area:
-  #   ports:
-  #     - "127.0.0.1:80:80"
-  #   volumes:
-  #     - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-  #     - static_files:/app/static
-  #   depends_on:
-  #     - backend
+  nginx:
+    image: nginx:latest
+    networks:
+      local_area:
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - front_bundle:/app/bundle
+    depends_on:
+      - backend
 
   # fill_db:
   #   build:
