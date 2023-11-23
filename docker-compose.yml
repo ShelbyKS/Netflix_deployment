@@ -22,6 +22,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
 
   backend:
     build:
@@ -39,6 +41,8 @@ services:
         condition: service_started
       frontend:
         condition: service_completed_successfully
+    ports:
+      - ${SERVER_PORT}:${SERVER_PORT}
 
   frontend:
     build:

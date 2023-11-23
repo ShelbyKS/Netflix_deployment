@@ -41,6 +41,10 @@ CREATE TABLE video
     updated_at         TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
+ALTER TABLE "video" ADD COLUMN tsv tsvector;
+
+-- UPDATE "video" SET tsv = setweight(to_tsvector(name), 'A');   это нужно добавить в скрипт после добавления данных
+
 CREATE TRIGGER modify_video_updated_at
     BEFORE UPDATE
     ON video
@@ -52,6 +56,12 @@ CREATE TABLE "cast"
     id   serial PRIMARY KEY,
     name varchar UNIQUE NOT NULL
 );
+
+ALTER TABLE "cast" ADD COLUMN tsv tsvector;
+
+-- UPDATE "cast" SET tsv = setweight(to_tsvector(name), 'A');   это нужно добавить в скрипт после добавления данных
+
+CREATE INDEX ix_scenes_tsv ON "cast" USING GIN(tsv);
 
 CREATE TABLE video_cast
 (
