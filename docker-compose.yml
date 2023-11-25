@@ -2,6 +2,7 @@ version: '3.9'
 
 volumes:
   postgres_data:
+  postgres_data_survay:
   redis_data:
   front_bundle:
 
@@ -24,6 +25,21 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - ${POSTGRES_PORT}:${POSTGRES_PORT}
+
+  postgres_survey:
+    image: postgres:15.3-alpine
+    restart: always
+    networks:
+      local_area:
+    volumes:
+      - postgres_data_survay:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init_survey.sql
+    environment:
+      POSTGRES_USER: ${POSTGRES_CSAT_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_CSAT_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_CSAT_DB}
+    ports:
+      - ${POSTGRES_CSAT_PORT}:${POSTGRES_CSAT_PORT}
 
   auth:
     build:
