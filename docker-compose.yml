@@ -68,6 +68,23 @@ services:
     depends_on:
       - backend
 
+  grafana:
+    image: grafana/grafana-enterprise
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - 9090:9090
+    command:
+      --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ../2023_2_Holi/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
   # fill_db:
   #   build:
   #     context: ../fill_db
