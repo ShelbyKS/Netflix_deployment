@@ -60,6 +60,25 @@ services:
     ports:
       - ${AUTHMS_HTTP_SERVER_PORT}:${AUTHMS_HTTP_SERVER_PORT}
 
+  survay:
+    build:
+      context: ../backend
+      dockerfile: cmd/survay_service/Dockerfile
+    networks:
+      local_area:
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
+      frontend:
+        condition: service_completed_successfully
+    ports:
+      - ${SURVAYMS_HTTP_SERVER_PORT}:${SURVAYMS_HTTP_SERVER_PORT}
+
   backend:
     build:
       context: ../backend
