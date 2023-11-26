@@ -93,6 +93,8 @@ services:
 
   grafana:
     image: grafana/grafana-enterprise
+    networks:
+      local_area:
     container_name: grafana
     restart: unless-stopped
     ports:
@@ -100,6 +102,8 @@ services:
 
   prometheus:
     image: prom/prometheus:latest
+    networks:
+      local_area:
     container_name: prometheus
     ports:
       - 9090:9090
@@ -107,18 +111,6 @@ services:
       --config.file=/etc/prometheus/prometheus.yml
     volumes:
       - ../2023_2_Holi/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-
-#  node-exporter:
-#    image: quay.io/prometheus/node-exporter:latest
-#    container_name: dt-prometheus-node-exporter
-#    command:
-#      - '--path.rootfs=/host'
-#    pid: host
-#    restart: unless-stopped
-#    volumes:
-#      - '/:/host:ro'
-#    ports:
-#      - 9100:9100
 
   node-exporter:
     image: quay.io/prometheus/node-exporter:latest
