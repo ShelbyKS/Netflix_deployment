@@ -2,10 +2,8 @@ version: '3.9'
 
 volumes:
   postgres_data:
-  postgres_data_survay:
   redis_data:
   front_bundle:
-  front_bundle_survey:
 
 networks:
   local_area:
@@ -18,7 +16,7 @@ services:
     networks:
       local_area:
     volumes:
-      - postgres_data:/var/lib/postgresql/data 
+      - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -105,6 +103,44 @@ services:
     depends_on:
       backend:
         condition: service_started
+
+  grafana:
+    image: grafana/grafana-enterprise
+    networks:
+      local_area:
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+
+  prometheus:
+    image: prom/prometheus:latest
+    networks:
+      local_area:
+    container_name: prometheus
+    ports:
+      - 9090:9090
+    command:
+      --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ../backend/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    networks:
+      local_area:
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    expose:
+      - 9100
 
   fill_db:
      build:
