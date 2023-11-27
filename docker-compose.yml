@@ -2,10 +2,8 @@ version: '3.9'
 
 volumes:
   postgres_data:
-  postgres_data_survay:
   redis_data:
   front_bundle:
-  front_bundle_survey:
 
 networks:
   local_area:
@@ -14,11 +12,12 @@ networks:
 services:
   postgres:
     image: postgres:15.3-alpine
+    container_name: postgres
     restart: always
     networks:
       local_area:
     volumes:
-      - postgres_data:/var/lib/postgresql/data 
+      - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -27,22 +26,8 @@ services:
     ports:
       - ${POSTGRES_PORT}:${POSTGRES_PORT}
 
-  postgres_survey:
-    image: postgres:15.3-alpine
-    restart: always
-    networks:
-      local_area:
-    volumes:
-      - postgres_data_survay:/var/lib/postgresql/data
-      - ./init_survey.sql:/docker-entrypoint-initdb.d/init.sql
-    environment:
-      POSTGRES_USER: ${POSTGRES_CSAT_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_CSAT_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_CSAT_DB}
-    ports:
-      - ${POSTGRES_CSAT_PORT}:${POSTGRES_CSAT_PORT}
-
   auth:
+    container_name: auth
     build:
       context: ../backend
       dockerfile: cmd/auth_service/Dockerfile
@@ -58,25 +43,27 @@ services:
         condition: service_started
       frontend:
         condition: service_completed_successfully
-    ports:
-      - ${AUTHMS_HTTP_SERVER_PORT}:${AUTHMS_HTTP_SERVER_PORT}
+    expose:
+      - ${AUTHMS_HTTP_SERVER_PORT}
 
-  survey:
+  profile:
+    container_name: profile
     build:
       context: ../backend
-      dockerfile: cmd/survay_service/Dockerfile
+      dockerfile: cmd/profile_service/Dockerfile
     networks:
       local_area:
     restart: unless-stopped
     env_file:
       - .env
     depends_on:
-      postgres_survey:
+      auth:
         condition: service_started
-    ports:
-      - ${SURVAYMS_HTTP_SERVER_PORT}:${SURVAYMS_HTTP_SERVER_PORT}
+    expose:
+      - ${PROFILEMS_HTTP_SERVER_PORT}
 
   backend:
+    container_name: backend
     build:
       context: ../backend
       dockerfile: Dockerfile
@@ -86,35 +73,23 @@ services:
     env_file:
       - .env
     depends_on:
-      postgres:
-        condition: service_started
-      redis:
-        condition: service_started
-      frontend:
-        condition: service_completed_successfully
       auth:
         condition: service_started
-    ports:
-      - ${SERVER_PORT}:${SERVER_PORT}
-
+    expose:
+      - ${SERVER_PORT}
 
 
   frontend:
+    container_name: frontend
     build:
       context: ../frontend
       dockerfile: Dockerfile
     volumes:
       - front_bundle:/app/bundle
 
-  frontend_survey:
-    build:
-      context: ../hakaton
-      dockerfile: Dockerfile
-    volumes:
-      - front_bundle_survey:/app/bundle
-
   redis:
     image: redis:6.2-alpine
+    container_name: redis
     networks:
       local_area:
     restart: always
@@ -124,45 +99,124 @@ services:
 
   nginx:
     image: nginx:latest
+    container_name: nginx
     networks:
       local_area:
     ports:
       - ${APP_PORT}:${APP_PORT}
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - front_bundle_survey:/app/bundle_survey
       - front_bundle:/app/bundle
     depends_on:
-      - backend
+      backend:
+        condition: service_started
 
-  nginx_survey:
-    image: nginx:latest
+  grafana:
+    image: grafana/grafana-enterprise
     networks:
       local_area:
+    container_name: grafana
+    restart: unless-stopped
     ports:
-      - 81:81
+      - '3005:3005'
+
+  prometheus:
+    image: prom/prometheus:latest
+    networks:
+      local_area:
+    container_name: prometheus
+    ports:
+      - 9090:9090
+    command:
+      --config.file=/etc/prometheus/prometheus.yml
     volumes:
-      - ./nginx_survey.conf:/etc/nginx/conf.d/default.conf:ro
-      - front_bundle_survey:/app/bundle_survey
-    depends_on:
-      - backend
+      - ../backend/prometheus.yml:/etc/prometheus/prometheus.yml:ro
 
-  # fill_db:
-  #   build:
-  #     context: ../fill_db
-  #     dockerfile: Dockerfile
-  #   networks:
-  #     local_area:
-  #   environment:
-  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-  #     POSTGRES_USER: ${POSTGRES_USER}
-  #     POSTGRES_DB: ${POSTGRES_DB}
-  #     POSTGRES_HOST: ${POSTGRES_HOST}
-  #     POSTGRES_PORT: ${POSTGRES_PORT}
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    networks:
+      local_area:
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    expose:
+      - 9100
 
-  #   depends_on:
-  #     postgres:
-  #       condition: service_started
+  fill_db:
+     build:
+       context: ../backend/cmd/fill_db
+       dockerfile: Dockerfile
+     networks:
+       local_area:
+     container_name: fill_db
+     environment:
+       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+       POSTGRES_USER: ${POSTGRES_USER}
+       POSTGRES_DB: ${POSTGRES_DB}
+       POSTGRES_HOST: ${POSTGRES_HOST}
+       POSTGRES_PORT: ${POSTGRES_PORT}
+
+     depends_on:
+       postgres:
+         condition: service_started
+
+
+#  postgres_survey:
+#    image: postgres:15.3-alpine
+#    restart: always
+#    networks:
+#      local_area:
+#    volumes:
+#      - postgres_data_survay:/var/lib/postgresql/data
+#      - ./init_survey.sql:/docker-entrypoint-initdb.d/init.sql
+#    environment:
+#      POSTGRES_USER: ${POSTGRES_CSAT_USER}
+#      POSTGRES_PASSWORD: ${POSTGRES_CSAT_PASSWORD}
+#      POSTGRES_DB: ${POSTGRES_CSAT_DB}
+#    ports:
+#      - ${POSTGRES_CSAT_PORT}:${POSTGRES_CSAT_PORT}
+
+
+#  nginx_survey:
+#    image: nginx:latest
+#    networks:
+#      local_area:
+#    ports:
+#      - 81:81
+#    volumes:
+#      - ./nginx_survey.conf:/etc/nginx/conf.d/default.conf:ro
+#      - front_bundle_survey:/app/bundle_survey
+#    depends_on:
+#      - backend
+
+#  frontend_survey:
+#    build:
+#      context: ../hakaton
+#      dockerfile: Dockerfile
+#    volumes:
+#      - front_bundle_survey:/app/bundle
+
+#  survey:
+#    build:
+#      context: ../backend
+#      dockerfile: cmd/survay_service/Dockerfile
+#    networks:
+#      local_area:
+#    restart: unless-stopped
+#    env_file:
+#      - .env
+#    depends_on:
+#      postgres_survey:
+#        condition: service_started
+#    ports:
+#      - ${SURVAYMS_HTTP_SERVER_PORT}:${SURVAYMS_HTTP_SERVER_PORT}
 
 
 
