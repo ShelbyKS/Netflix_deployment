@@ -2,7 +2,6 @@ version: '3.9'
 
 volumes:
   postgres_data:
-  postgres_usr_data:
   redis_data:
   front_bundle:
 
@@ -107,6 +106,7 @@ services:
     expose:
       - ${SERVER_PORT}
 
+
   frontend:
     container_name: frontend
     build:
@@ -145,8 +145,10 @@ services:
       local_area:
     container_name: grafana
     restart: unless-stopped
+    expose:
+      - 3000
     ports:
-      - '3000:3000'
+      - 3000:3000
 
   prometheus:
     image: prom/prometheus:latest
@@ -159,6 +161,8 @@ services:
       --config.file=/etc/prometheus/prometheus.yml
     volumes:
       - ../backend/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - 9090:9090
 
   node-exporter:
     image: quay.io/prometheus/node-exporter:latest
@@ -190,6 +194,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_PORT: ${POSTGRES_PORT}
+
     depends_on:
       postgres:
         condition: service_started
