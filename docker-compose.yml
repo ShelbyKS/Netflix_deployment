@@ -29,7 +29,7 @@ services:
   auth:
     container_name: auth
     build:
-      context: ../2023_2_Holi
+      context: ../backend
       dockerfile: cmd/auth_service/Dockerfile
     networks:
       local_area:
@@ -49,7 +49,7 @@ services:
   profile:
     container_name: profile
     build:
-      context: ../2023_2_Holi
+      context: ../backend
       dockerfile: cmd/profile_service/Dockerfile
     networks:
       local_area:
@@ -65,7 +65,7 @@ services:
   film_series:
     container_name: films_series
     build:
-      context: ../2023_2_Holi
+      context: ../backend
       dockerfile: cmd/films_series_service/Dockerfile
     networks:
       local_area:
@@ -81,7 +81,7 @@ services:
   backend:
     container_name: backend
     build:
-      context: ../2023_2_Holi
+      context: ../backend
       dockerfile: Dockerfile
     networks:
       local_area:
@@ -98,7 +98,7 @@ services:
   frontend:
     container_name: frontend
     build:
-      context: ../front/2023_2_Holi
+      context: ../frontend
       dockerfile: Dockerfile
     volumes:
       - front_bundle:/app/bundle
@@ -146,7 +146,7 @@ services:
     command:
       --config.file=/etc/prometheus/prometheus.yml
     volumes:
-      - ../2023_2_Holi/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../backend/prometheus.yml:/etc/prometheus/prometheus.yml:ro
 
   node-exporter:
     image: quay.io/prometheus/node-exporter:latest
@@ -167,7 +167,7 @@ services:
 
   fill_db:
     build:
-      context: ../2023_2_Holi/cmd/fill_db
+      context: ../backend/cmd/fill_db
       dockerfile: Dockerfile
     networks:
       local_area:
@@ -221,7 +221,7 @@ services:
 
 #  survey:
 #    build:
-#      context: ../2023_2_Holi
+#      context: ../backend
 #      dockerfile: cmd/survay_service/Dockerfile
 #    networks:
 #      local_area:
