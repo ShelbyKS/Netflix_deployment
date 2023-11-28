@@ -134,7 +134,7 @@ services:
     container_name: grafana
     restart: unless-stopped
     ports:
-      - 3001:3000
+      - 3000:3000
 
   prometheus:
     image: prom/prometheus:latest
@@ -142,7 +142,7 @@ services:
       local_area:
     container_name: prometheus
     ports:
-      - 9091:9090
+      - 9090:9090
     command:
       --config.file=/etc/prometheus/prometheus.yml
     volumes:
