@@ -82,7 +82,7 @@ services:
     container_name: backend
     build:
       context: ../backend
-      dockerfile: Dockerfile
+      dockerfile: cmd/netflix/Dockerfile
     networks:
       local_area:
     restart: unless-stopped
