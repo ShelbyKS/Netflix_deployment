@@ -2,6 +2,7 @@ version: '3.9'
 
 volumes:
   postgres_data:
+  postgres_usr_data:
   redis_data:
   front_bundle:
 
@@ -24,7 +25,23 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+      - ${POSTGRES_PORT}:5432
+
+  postgres_usr:
+    image: postgres:15.3-alpine
+    container_name: postgres_usr
+    restart: always
+    networks:
+      local_area:
+    volumes:
+      - postgres_usr_data:/var/lib/postgresql/data
+      - ./init_usr.sql:/docker-entrypoint-initdb.d/init_usr.sql
+    environment:
+      POSTGRES_USER: ${POSTGRES_USR_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_USR_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_USR_DB}
+    ports:
+      - ${POSTGRES_USR_PORT}:5432
 
   auth:
     container_name: auth
@@ -94,7 +111,6 @@ services:
     expose:
       - ${SERVER_PORT}
 
-
   frontend:
     container_name: frontend
     build:
@@ -134,7 +150,7 @@ services:
     container_name: grafana
     restart: unless-stopped
     ports:
-      - '3005:3005'
+      - '3000:3000'
 
   prometheus:
     image: prom/prometheus:latest
@@ -142,7 +158,7 @@ services:
       local_area:
     container_name: prometheus
     ports:
-      - 9090:9090
+      - '9090:9090'
     command:
       --config.file=/etc/prometheus/prometheus.yml
     volumes:
