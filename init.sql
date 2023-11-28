@@ -82,7 +82,8 @@ CREATE TABLE video_estimation
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     video_id   INTEGER REFERENCES video (id),
-    user_id    INTEGER REFERENCES "user" (id),
+--     user_id    INTEGER REFERENCES "user" (id),
+    user_id    INTEGER NOT NULL,
     UNIQUE (video_id, user_id)
 );
 
@@ -123,7 +124,8 @@ CREATE TABLE favourite
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     video_id INTEGER REFERENCES video (id),
-    user_id   INTEGER REFERENCES "user" (id),
+--     user_id   INTEGER REFERENCES "user" (id),
+    user_id   INTEGER NOT NULL,
     PRIMARY KEY (video_id, user_id)
 );
 
