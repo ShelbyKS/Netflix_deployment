@@ -62,6 +62,22 @@ services:
     expose:
       - ${PROFILEMS_HTTP_SERVER_PORT}
 
+  film_series:
+    container_name: films_series
+    build:
+      context: ../backend
+      dockerfile: cmd/films_series_service/Dockerfile
+    networks:
+      local_area:
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      auth:
+        condition: service_started
+    expose:
+      - ${FILM_SERIES_HTTP_SERVER_PORT}
+
   backend:
     container_name: backend
     build:
@@ -95,7 +111,7 @@ services:
     restart: always
     volumes:
       - ./redis.conf:/usr/local/etc/redis/redis.conf
-      - redis_data:/var/lib/redis/data 
+      - redis_data:/var/lib/redis/data
 
   nginx:
     image: nginx:latest
@@ -150,22 +166,22 @@ services:
       - 9100
 
   fill_db:
-     build:
-       context: ../backend/cmd/fill_db
-       dockerfile: Dockerfile
-     networks:
-       local_area:
-     container_name: fill_db
-     environment:
-       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-       POSTGRES_USER: ${POSTGRES_USER}
-       POSTGRES_DB: ${POSTGRES_DB}
-       POSTGRES_HOST: ${POSTGRES_HOST}
-       POSTGRES_PORT: ${POSTGRES_PORT}
+    build:
+      context: ../backend/cmd/fill_db
+      dockerfile: Dockerfile
+    networks:
+      local_area:
+    container_name: fill_db
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
 
-     depends_on:
-       postgres:
-         condition: service_started
+    depends_on:
+      postgres:
+        condition: service_started
 
 
 #  postgres_survey:
@@ -217,6 +233,3 @@ services:
 #        condition: service_started
 #    ports:
 #      - ${SURVAYMS_HTTP_SERVER_PORT}:${SURVAYMS_HTTP_SERVER_PORT}
-
-
-
