@@ -58,6 +58,8 @@ services:
         condition: service_completed_successfully
     expose:
       - ${AUTHMS_HTTP_SERVER_PORT}
+    ports:
+      - ${AUTHMS_HTTP_SERVER_PORT}:${AUTHMS_HTTP_SERVER_PORT}
 
   profile:
     container_name: profile
@@ -74,6 +76,8 @@ services:
         condition: service_started
     expose:
       - ${PROFILEMS_HTTP_SERVER_PORT}
+    ports:
+      - ${PROFILEMS_HTTP_SERVER_PORT}:${PROFILEMS_HTTP_SERVER_PORT}
 
   film_series:
     container_name: films_series
@@ -90,6 +94,8 @@ services:
         condition: service_started
     expose:
       - ${FILM_SERIES_HTTP_SERVER_PORT}
+    ports:
+      - ${FILM_SERIES_HTTP_SERVER_PORT}:${FILM_SERIES_HTTP_SERVER_PORT}
 
   backend:
     container_name: backend
@@ -106,6 +112,8 @@ services:
         condition: service_started
     expose:
       - ${SERVER_PORT}
+    ports:
+      - ${SERVER_PORT}:${SERVER_PORT}
 
 
   frontend:
