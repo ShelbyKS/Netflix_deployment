@@ -48,6 +48,6 @@
     - name: "Copy nginx config"
       copy:
         src: files/nginx.conf
-        dest: /etc/nginx/conf.d/default.conf
+        dest: /etc/nginx/sited-enabled/
     - name: "Reload nginx"
       command: "nginx -s reload"
