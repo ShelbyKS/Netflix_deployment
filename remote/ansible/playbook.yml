@@ -37,6 +37,21 @@
 #    - name: Установка Docker Compose
 #      shell: curl -L "https://github.com/docker/compose/releases/download/2.23.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose
 
+#- name: "Install nginx"
+#  become: yes
+#  hosts: web
+#  tasks:
+#    - name: "Install nginx package"
+#      apt:
+#        name: nginx
+#        state: present
+#    - name: "Copy nginx config"
+#      copy:
+#        src: files/netflix.conf
+#        dest: /etc/nginx/conf.d/
+#    - name: "Reload nginx"
+#      command: "systemctl restart nginx"
+
 - name: "Install nginx"
   become: yes
   hosts: web
@@ -47,7 +62,7 @@
         state: present
     - name: "Copy nginx config"
       copy:
-        src: files/nginx.conf
-        dest: /etc/nginx/sited-enabled/
+        src: files/netflix_1.conf
+        dest: /etc/nginx/conf.d/
     - name: "Reload nginx"
-      command: "nginx -s reload"
+      command: "systemctl restart nginx"
