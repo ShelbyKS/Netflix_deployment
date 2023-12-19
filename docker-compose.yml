@@ -89,6 +89,22 @@ services:
     ports:
       - ${FILM_SERIES_HTTP_SERVER_PORT}:${FILM_SERIES_HTTP_SERVER_PORT}
 
+  subscription:
+    container_name: subscription
+    build:
+      context: ../backend
+      dockerfile: cmd/subscription_service/Dockerfile
+    networks:
+      local_area:
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      auth:
+        condition: service_started
+    ports:
+      - ${SUB_HTTP_SERVER_PORT}:${SUB_HTTP_SERVER_PORT}
+
   backend:
     container_name: backend
     build:
@@ -138,6 +154,47 @@ services:
       backend:
         condition: service_started
 
+  grafana:
+    image: grafana/grafana-enterprise
+    networks:
+      local_area:
+    container_name: grafana
+    restart: unless-stopped
+    expose:
+      - 3000
+    ports:
+      - 3000:3000
+
+  prometheus:
+    image: prom/prometheus:latest
+    networks:
+      local_area:
+    container_name: prometheus
+    expose:
+      - 9090
+    command:
+      --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ../backend/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - 9090:9090
+
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    networks:
+      local_area:
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    expose:
+      - 9100
 #  grafana:
 #    image: grafana/grafana-enterprise
 #    networks:
