@@ -106,13 +106,13 @@ services:
       - ${SERVER_PORT}:${SERVER_PORT}
 
 
-#  frontend:
-#    container_name: frontend
-#    build:
-#      context: ../frontend
-#      dockerfile: Dockerfile
-#    volumes:
-#      - front_bundle:/app/bundle
+  frontend:
+    container_name: frontend
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    volumes:
+      - front_bundle:/app/bundle
 
   redis:
     image: redis:6.2-alpine
@@ -124,19 +124,19 @@ services:
       - ./redis.conf:/usr/local/etc/redis/redis.conf
       - redis_data:/var/lib/redis/data
 
-#  nginx:
-#    image: nginx:latest
-#    container_name: nginx
-#    networks:
-#      local_area:
-#    ports:
-#      - ${APP_PORT}:${APP_PORT}
-#    volumes:
-#      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-#      - front_bundle:/app/bundle
-#    depends_on:
-#      backend:
-#        condition: service_started
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    networks:
+      local_area:
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - front_bundle:/app/bundle
+    depends_on:
+      backend:
+        condition: service_started
 
 #  grafana:
 #    image: grafana/grafana-enterprise
@@ -149,41 +149,41 @@ services:
 #    ports:
 #      - 3000:3000
 #
-  prometheus:
-    image: prom/prometheus:latest
-    networks:
-      local_area:
-    container_name: prometheus
-    expose:
-      - 9090
-    command:
-      --config.file=/etc/prometheus/prometheus.yml
-    volumes:
-      - ../backend/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-    ports:
-      - 9090:9090
-
-  node-exporter:
-    image: quay.io/prometheus/node-exporter:latest
-    networks:
-      local_area:
-    restart: unless-stopped
-    volumes:
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
-      - /:/rootfs:ro
-    command:
-      - '--path.procfs=/host/proc'
-      - '--path.rootfs=/rootfs'
-      - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
-    expose:
-      - 9100
+#  prometheus:
+#    image: prom/prometheus:latest
+#    networks:
+#      local_area:
+#    container_name: prometheus
+#    expose:
+#      - 9090
+#    command:
+#      --config.file=/etc/prometheus/prometheus.yml
+#    volumes:
+#      - ../backend/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+#    ports:
+#      - 9090:9090
+#
+#  node-exporter:
+#    image: quay.io/prometheus/node-exporter:latest
+#    networks:
+#      local_area:
+#    restart: unless-stopped
+#    volumes:
+#      - /proc:/host/proc:ro
+#      - /sys:/host/sys:ro
+#      - /:/rootfs:ro
+#    command:
+#      - '--path.procfs=/host/proc'
+#      - '--path.rootfs=/rootfs'
+#      - '--path.sysfs=/host/sys'
+#      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+#    expose:
+#      - 9100
 
   fill_db:
     build:
-      context: ../backend/cmd/fill_db
-      dockerfile: Dockerfile
+      context: ../backend
+      dockerfile: cmd/fill_db/Dockerfile
     networks:
       local_area:
     container_name: fill_db

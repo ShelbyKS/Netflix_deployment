@@ -1,4 +1,3 @@
----
 #- name: "Update systemd unit"
 #  become: yes
 #  hosts: web
@@ -9,34 +8,66 @@
 #        dest: /etc/systemd/system/api.service
 #    - name: "Systemctl daemon reload"
 #      command: systemctl daemon-reload
-#- name: "Install docker"
-#  become: yes
-#  hosts: all
-#  roles:
-#    - role: geerlingguy.docker
-#- name: Установка Docker и Docker Compose
-#  hosts: all
-#  become: true
-#
-#  tasks:
-#    - name: Установка зависимостей для Docker Compose
-#      apt:
-#        name: ['apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common']
-#        state: present
-#
-#    - name: Добавление официального репозитория Docker
-#      apt_repository:
-#        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable
-#        state: present
-#
-#    - name: Установка Docker
-#      apt:
-#        name: docker-ce
-#        state: present
-#
-#    - name: Установка Docker Compose
-#      shell: curl -L "https://github.com/docker/compose/releases/download/2.23.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose
 
+- hosts: all
+  become: yes
+  gather_facts: false
+  tasks:
+    - name: Install docker packages
+      remote_user: ansible_ubuntu_demo
+      apt:
+        name: ['apt-transport-https','ca-certificates', 'curl', 'software-properties-common']
+        state: present
+        update_cache: yes
+      tags:
+        - docker
+    - name: Add Docker s GPG key for ubuntu from official site
+      remote_user: ansible_ubuntu_demo
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+      tags:
+        - docker
+    - name: Verify gpg key with the fingerprint
+      remote_user: ansible_ubuntu_demo
+      apt_key:
+        id: 0EBFCD88
+        state: present
+      tags:
+        - docker
+    - name: Configure Docker for ubuntu stable repository
+      remote_user: ansible_ubuntu_demo
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable
+        state: present
+        update_cache: yes
+      tags:
+        - docker
+    - name: Install docker-ce
+      remote_user: ansible_ubuntu_demo
+      apt:
+        name: docker-ce
+        state: present
+        update_cache: yes
+      tags:
+        - docker
+    - name: Add "ansible_ubuntu_demo" user to "docker" group
+      remote_user: ansible_ubuntu_demo
+      user:
+        name: "ansible_ubuntu_demo"
+        group: "docker"
+        append: yes
+      tags:
+        - docker
+    - name: Install docker-compose from official github repo
+      remote_user: ansible_ubuntu_demo
+      get_url:
+        url: https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Linux-x86_64
+        dest: /usr/local/bin/docker-compose
+        mode: 'u+x,g+x'
+
+
+#
 #- name: "Install nginx"
 #  become: yes
 #  hosts: web
@@ -47,22 +78,7 @@
 #        state: present
 #    - name: "Copy nginx config"
 #      copy:
-#        src: files/netflix.conf
+#        src: files/netflix_s3.conf
 #        dest: /etc/nginx/conf.d/
 #    - name: "Reload nginx"
 #      command: "systemctl restart nginx"
-
-- name: "Install nginx"
-  become: yes
-  hosts: web
-  tasks:
-    - name: "Install nginx package"
-      apt:
-        name: nginx
-        state: present
-    - name: "Copy nginx config"
-      copy:
-        src: files/netflix.conf
-        dest: /etc/nginx/conf.d/
-    - name: "Reload nginx"
-      command: "systemctl restart nginx"
